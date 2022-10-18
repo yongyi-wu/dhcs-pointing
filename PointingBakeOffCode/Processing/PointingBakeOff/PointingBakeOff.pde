@@ -16,7 +16,14 @@ int hits = 0; //number of successful clicks
 int misses = 0; //number of missed clicks
 Robot robot; //initialized in setup
 Rectangle next = null;
-int numRepeats = 1; //sets the number of times each button repeats in the test
+int numRepeats = 20; //sets the number of times each button repeats in the test
+// information for the previous trial
+int prevX = 0;
+int prevY = 0;
+float prevT = millis();
+
+int participateID = 0; //CHANGE THIS! (Ethan: 0; Philip: ; Zhichun: )
+
 void setup()
 {
   size(700, 700); // set the size of the window
@@ -65,7 +72,7 @@ void draw()
   text((trialNum + 1) + " of " + trials.size(), 40, 20); //display what trial the user is on
   if (trialNum < trials.size()) {
     //print(trials.get(trialNum + 1));
-    if (trialNum +1 < 16)
+    if (trialNum + 1 < trials.size())
       next = getButtonLocation(trials.get(trialNum + 1));
   }
   for (int i = 0; i < 16; i++) {
@@ -92,22 +99,31 @@ void mousePressed() // test to see if hit was in target!
     return;
   if (trialNum == 0) //check if first click, if so, start timer
     startTime = millis();
+  Rectangle bounds = getButtonLocation(trials.get(trialNum));
+  //check to see if mouse cursor is inside button
+  int hit;
+  if ((mouseX > bounds.x && mouseX < bounds.x + bounds.width) && (mouseY > bounds.y && mouseY < bounds.y + bounds.height)) // test to see if hit was within bounds
+  {
+    //System.out.println("HIT! " + trialNum + " " + (millis() - startTime)); // success
+    hits++;
+    hit = 1;
+  } else
+  {
+    //System.out.println("MISSED! " + trialNum + " " + (millis() - startTime)); // fail
+    misses++;
+    hit = 0;
+  }
+  if (trialNum > 0) {
+    System.out.println(trialNum + "," + participateID + "," + prevX + "," + prevY + "," + (bounds.x + bounds.width/2) + "," + (bounds.y + bounds.height/2) + "," + 40 + "," + (millis() - prevT) / 1000f + "," + hit);
+  }
+  prevX = mouseX;
+  prevY = mouseY;
+  prevT = millis();
   if (trialNum == trials.size() - 1) //check if final click
   {
     finishTime = millis();
     //write to terminal some output. Useful for debugging too.
-    println("we’re done!");
-  }
-  Rectangle bounds = getButtonLocation(trials.get(trialNum));
-  //check to see if mouse cursor is inside button
-  if ((mouseX > bounds.x && mouseX < bounds.x + bounds.width) && (mouseY > bounds.y && mouseY < bounds.y + bounds.height)) // test to see if hit was within bounds
-  {
-    System.out.println("HIT! " + trialNum + " " + (millis() - startTime)); // success
-    hits++;
-  } else
-  {
-    System.out.println("MISSED! " + trialNum + " " + (millis() - startTime)); // fail
-    misses++;
+    println("we're done!");
   }
   trialNum++; //Increment trial number
   //in this example code, we move the mouse back to the middle
@@ -132,7 +148,7 @@ void drawButton(int i)
   } else
     fill(200); // if not, fill gray
   rect(bounds.x, bounds.y, bounds.width, bounds.height); //draw button
-  if (next != null && trials.get(trialNum) == i) {
+  if (trials.get(trialNum) == i && next != null && i != trials.get(trialNum + 1)) {
     pushMatrix();
     translate(bounds.x + 20, bounds.y + 20);
     float angle = atan2(next.y - bounds.y, next.x - bounds.x);
